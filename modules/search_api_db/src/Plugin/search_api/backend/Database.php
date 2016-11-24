@@ -2324,6 +2324,9 @@ class Database extends BackendPluginBase implements PluginFormInterface {
         // the facet filters applied to the facet.
         $or_query = clone $query;
         $conditions = &$or_query->getConditionGroup()->getConditions();
+        // We need to remember the conditions we are removing for this facet
+        // as we still need to use the conditions for other facets.
+        $removed_conditions = [];
         $tag = 'facet:' . $facet['field'];
         foreach ($conditions as $i => $condition) {
           if ($condition instanceof ConditionGroupInterface && $condition->hasTag($tag)) {
@@ -2332,6 +2335,11 @@ class Database extends BackendPluginBase implements PluginFormInterface {
         }
         $or_db_query = $this->createDbQuery($or_query, $fields);
         $select = $this->database->select($or_db_query, 't');
+
+        // Re-add the conditions we removed just for this facet's query.
+        foreach($removed_conditions as $i => $condition) {
+          $conditions[$i] = $condition;
+        }
       }
 
       // If "Include missing facet" is disabled, we use an INNER JOIN and add IS
